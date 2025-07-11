@@ -2,23 +2,18 @@
 setlocal enabledelayedexpansion
 
 :: =================================================================================
-:: AMD 硬件加速转码脚本 - V6 (最终审查版)
+:: AMD 硬件加速转码脚本 - V7 (兼容性修正版)
 :: 作者: Gemini
-:: 版本: 6.0
+:: 版本: 7.0
 :: 日期: 2025-07-11
-:: 功能:
-:: 1. 在输出和备份目录中完整保留原始的文件夹结构。
-:: 2. 集中化的用户配置，可轻松调整所有参数。
-:: 3. 可选的音频处理: 直接复制 或 压缩为AAC。
-:: 4. 可选的分辨率调整，支持保持宽高比。
-:: 5. 自动扫描、断点续传、备份源文件。
-:: 6. 使用 AMD AMF 硬件加速 (HEVC/H.265)。
-:: 7. 完整保留所有字幕轨道。
+:: 更新: 修正了由特殊字符(...)导致的 "此时不应有" 语法错误。
+::
+:: ★★ 重要提示: 请务必使用 "ANSI" 编码来保存此 .bat 文件! ★★
 :: =================================================================================
 
 echo.
 echo ==========================================================
-echo    AMD AMF 视频批量转码脚本 (V6 - 最终审查版)
+echo    AMD AMF 视频批量转码脚本 (V7 - 兼容性修正版)
 echo ==========================================================
 echo.
 
@@ -31,11 +26,11 @@ echo.
 
 :: --- 1. 路径设置 ---
 :: 源文件夹: 存放待转换视频的文件夹。
-SET "sourceFolder=D:\Videos\ToConvert"
+SET "sourceFolder=D:\testv"
 :: 输出文件夹: 存放转换后视频的文件夹。
-SET "outputFolder=D:\Videos\Converted"
+SET "outputFolder=D:\testout"
 :: 备份文件夹: 存放成功转换后的原始视频。
-SET "originalsFolder=D:\Videos\Original_Files_Backup"
+SET "originalsFolder=D:\Original_Files_Backup"
 
 :: --- 2. 转码质量设置 ---
 :: 可选值: speed (速度最快), balanced (均衡), quality (质量最高)
@@ -46,16 +41,16 @@ SET "qualityPreset=balanced"
 :: -> 推荐使用 "-1" 来保持宽高比，避免视频变形:
 ::      -1:1080  (最常用: 将视频高度设为1080p，宽度自动)
 ::      -1:720   (将视频高度设为720p，宽度自动)
-SET "outputResolution=-1:1080"
+SET "outputResolution="
 
 :: --- 4. 音频处理设置 ---
 :: -> 使用 "rem" 来注释掉您不想使用的选项。确保只有一个选项是激活的。
 
 :: 选项 A: 直接复制音频流 (速度最快，无损，但文件较大)
-SET "audioCommand=-c:a copy"
+rem SET "audioCommand=-c:a copy"
 
 :: 选项 B: 重新编码为高质量AAC (兼容性好，文件更小)
-rem SET "audioCommand=-c:a aac -b:a 192k"
+SET "audioCommand=-c:a aac -b:a 192k"
 
 
 :: ################################################################################
@@ -126,7 +121,7 @@ for /f "delims=" %%I in ('type "%todoFile%"') do (
     if not exist "!outputDir!" mkdir "!outputDir!"
     
     set "scaleFilterCommand="
-    if not "!outputResolution!"=="" (
+    if not "!outputResolution%"=="" (
         set "scaleFilterCommand=-vf scale=!outputResolution!"
     )
 
@@ -136,7 +131,7 @@ for /f "delims=" %%I in ('type "%todoFile%"') do (
     echo [TO]         目标路径: !outputFile!
     echo ----------------------------------------------------------------------
 
-    :: FFmpeg 核心命令 (V6)
+    :: FFmpeg 核心命令 (V7)
     ffmpeg -hide_banner -hwaccel dxva2 -i "%%I" !scaleFilterCommand! -map 0 -c:v hevc_amf -quality !qualityPreset! !audioCommand! -c:s copy -y "!outputFile!"
 
     if not !errorlevel! equ 0 (
@@ -145,7 +140,7 @@ for /f "delims=" %%I in ('type "%todoFile%"') do (
         echo.
         echo [SUCCESS]    成功转换: !fileName!!fileExt!
         
-        :: ★★★ 修正备份逻辑: 在备份文件夹内也创建同样的目录结构 ★★★
+        :: 在备份文件夹内也创建同样的目录结构
         for %%B in ("!relativePath!") do set "backupDestDir=%originalsFolder%%%~dpB"
         if not exist "!backupDestDir!" mkdir "!backupDestDir!"
         
