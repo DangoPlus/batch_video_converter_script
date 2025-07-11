@@ -1,3 +1,63 @@
+# AMD AMF Video Batch Transcoder - README (V14 - Definitive Stable)
+
+## Script Overview
+This is a powerful and thoroughly tested Windows Batch script designed to automate video transcoding. This version features a **completely rebuilt core loop logic** that is immune to the variable expansion failures and path errors encountered in previous versions. **This is the definitive, stable build.**
+
+The core design principles of this script are **Safety, Robustness, and Ease of Use.**
+
+## Core Features
+*   **Robust Core Logic**: The script uses a direct `FOR /R` loop, the most reliable method for iterating through files, which prevents all previously known bugs.
+*   **Handles Complex Filenames**: The path construction logic is fundamentally robust and correctly handles filenames with special characters (`[]()`, spaces, etc.).
+*   **Preserves Directory Structure**: Perfectly maintains the original folder structure for both output and backup files.
+*   **AMD Hardware Acceleration**: Uses the `hevc_amf` encoder to maximize performance.
+*   **Resume Capability**: Automatically logs completed files, so if the script is stopped, it will resume where it left off, skipping already converted files.
+*   **Smart File Management**: Moves original files to a structured backup folder upon successful conversion.
+*   **Full Stream Preservation**: Copies all subtitle and audio tracks unless configured otherwise.
+*   **Highly Configurable**: All important parameters are easily adjusted in the user configuration section.
+
+## First-Time Setup (One Time Only)
+
+You must have **FFmpeg** correctly installed and configured.
+
+#### **Step 1: Download FFmpeg**
+1.  Go to the official FFmpeg builds page for Windows: [https://www.gyan.dev/ffmpeg/builds/](https://www.gyan.dev/ffmpeg/builds/)
+2.  Download the latest "release" build (`ffmpeg-release-full.7z`).
+
+#### **Step 2: Unzip and Set Environment Variable**
+1.  Unzip the file to a permanent location, e.g., `C:\ffmpeg`.
+2.  Find the `bin` directory inside and copy its full path.
+3.  Add this path to your Windows Environment Variables (`Path`).
+
+#### **Step 3: Verify Installation**
+1.  Open a new Command Prompt (`cmd.exe`) and type `ffmpeg -version`.
+2.  If you see version info, you are ready.
+
+## How to Use
+
+#### **Step 1: Save the Script Correctly (CRITICAL)**
+1.  **Delete any old versions** of the script file.
+2.  Create a **new, empty text file**.
+3.  Copy the code for **V14** into this new file.
+4.  Click "File" -> "Save As...".
+5.  Set "Save as type" to **"All Files (*.*)"**.
+6.  Set "Encoding" to **"ANSI"**.
+7.  Name the file `transcode.bat` and save it.
+
+#### **Step 2: Edit Configuration**
+Open the `.bat` file with Notepad. At the top, in the `USER CONFIGURATION` section, edit the paths and settings to match your needs.
+**Important**: Do not add a trailing backslash (`\`) to your folder paths.
+
+#### **Step 3: Run the Script**
+1.  Place your source video files and folders into the `sourceFolder` you defined.
+2.  Double-click the `transcode.bat` file to run it.
+
+## Notes
+*   **Resetting Progress**: To re-process all files, simply delete the `completed_list.log` file from the script's directory.
+*   **Backups**: Periodically check your `originalsFolder`. Once you confirm the transcoded videos are correct, you can safely delete the backed-up originals to save space.
+
+## Disclaimer
+Always test this script with a few non-critical files first to ensure it behaves as you expect. The author is not responsible for any potential data loss. Use at your own risk and always have backups of important files.
+
 # AMD AMF 视频批量转码脚本 - 使用说明 (V10 - 最终版)
 
 ## 脚本简介
