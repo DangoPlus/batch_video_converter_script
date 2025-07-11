@@ -2,22 +2,23 @@
 setlocal enabledelayedexpansion
 
 :: =================================================================================
-:: AMD 硬件加速转码脚本 - V4 (带音频选项)
+:: AMD 硬件加速转码脚本 - V6 (最终审查版)
 :: 作者: Gemini
-:: 版本: 4.0
+:: 版本: 6.0
 :: 日期: 2025-07-11
 :: 功能:
-:: 1. 集中化的用户配置，可轻松调整所有参数。
-:: 2. 可选的音频处理: 直接复制 或 压缩为AAC。
-:: 3. 可选的分辨率调整，支持保持宽高比。
-:: 4. 自动扫描、断点续传、备份源文件。
-:: 5. 使用 AMD AMF 硬件加速 (HEVC/H.265)。
-:: 6. 完整保留所有字幕轨道。
+:: 1. 在输出和备份目录中完整保留原始的文件夹结构。
+:: 2. 集中化的用户配置，可轻松调整所有参数。
+:: 3. 可选的音频处理: 直接复制 或 压缩为AAC。
+:: 4. 可选的分辨率调整，支持保持宽高比。
+:: 5. 自动扫描、断点续传、备份源文件。
+:: 6. 使用 AMD AMF 硬件加速 (HEVC/H.265)。
+:: 7. 完整保留所有字幕轨道。
 :: =================================================================================
 
 echo.
 echo ==========================================================
-echo       AMD AMF 视频批量转码脚本 (V4 - 带音频选项)
+echo    AMD AMF 视频批量转码脚本 (V6 - 最终审查版)
 echo ==========================================================
 echo.
 
@@ -114,11 +115,16 @@ for /f "delims=" %%I in ('type "%todoFile%"') do (
     set "fileName=%%~nI"
     set "fileExt=%%~xI"
 
+    :: --- 计算并创建目标文件夹结构 ---
+    set "relativePath=!fullPath:%sourceFolder%=!"
+    
     set "outputExtension=.mp4"
     if /i "!fileExt!"==".mkv" ( set "outputExtension=.mkv" )
-    set "outputFile=%outputFolder%\!fileName!!outputExtension!"
 
-    :: 根据分辨率设置，准备视频滤镜命令
+    for %%B in ("!relativePath!") do set "outputFile=%outputFolder%%%~dpnB!outputExtension!"
+    for %%D in ("!outputFile!") do set "outputDir=%%~dpD"
+    if not exist "!outputDir!" mkdir "!outputDir!"
+    
     set "scaleFilterCommand="
     if not "!outputResolution!"=="" (
         set "scaleFilterCommand=-vf scale=!outputResolution!"
@@ -126,10 +132,11 @@ for /f "delims=" %%I in ('type "%todoFile%"') do (
 
     echo ----------------------------------------------------------------------
     echo [CONVERTING] 正在转换: !fileName!!fileExt!
-    echo [OUTPUT]     输出路径: !outputFile!
+    echo [FROM]       源路径: !fullPath!
+    echo [TO]         目标路径: !outputFile!
     echo ----------------------------------------------------------------------
 
-    :: FFmpeg 核心命令 (V4)
+    :: FFmpeg 核心命令 (V6)
     ffmpeg -hide_banner -hwaccel dxva2 -i "%%I" !scaleFilterCommand! -map 0 -c:v hevc_amf -quality !qualityPreset! !audioCommand! -c:s copy -y "!outputFile!"
 
     if not !errorlevel! equ 0 (
@@ -137,8 +144,14 @@ for /f "delims=" %%I in ('type "%todoFile%"') do (
     ) else (
         echo.
         echo [SUCCESS]    成功转换: !fileName!!fileExt!
-        echo [MOVING]     正在移动源文件到备份文件夹...
-        move "%%I" "%originalsFolder%\" >nul
+        
+        :: ★★★ 修正备份逻辑: 在备份文件夹内也创建同样的目录结构 ★★★
+        for %%B in ("!relativePath!") do set "backupDestDir=%originalsFolder%%%~dpB"
+        if not exist "!backupDestDir!" mkdir "!backupDestDir!"
+        
+        echo [MOVING]     正在移动源文件到备份文件夹 (保留结构)...
+        move "%%I" "!backupDestDir!" >nul
+        
         echo %%I >> "%logFile%"
         echo.
     )
